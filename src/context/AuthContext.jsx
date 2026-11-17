@@ -1,56 +1,63 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signOut, 
-  onAuthStateChanged, 
-  signInWithPopup 
+import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  signInWithPopup,
 } from "firebase/auth";
 import { auth, googleProvider } from "../firebase";
 
-const AuthContext = createContext();
+const SessionContext = createContext(null);
 
-export const AuthProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+export const SessionProvider = ({ children }) => {
+  const [activeUser, setActiveUser] = useState(null);
+  const [isSessionLoading, setIsSessionLoading] = useState(true);
 
-  const signup = (email, password) => {
-    return createUserWithEmailAndPassword(auth, email, password);
+  const registerWithEmail = (userEmail, userPassword) => {
+    return createUserWithEmailAndPassword(auth, userEmail, userPassword);
   };
 
-  const login = (email, password) => {
-    return signInWithEmailAndPassword(auth, email, password);
+  const authenticateWithEmail = (userEmail, userPassword) => {
+    return signInWithEmailAndPassword(auth, userEmail, userPassword);
   };
 
-  const loginWithGoogle = () => {
+  const authenticateWithGoogle = () => {
     return signInWithPopup(auth, googleProvider);
   };
 
-  const logout = () => {
+  const terminateSession = () => {
     return signOut(auth);
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-      setLoading(false);
+    const unsubscribeListener = onAuthStateChanged(auth, (firebaseUser) => {
+      setActiveUser(firebaseUser);
+      setIsSessionLoading(false);
     });
-    return unsubscribe;
+
+    return () => unsubscribeListener();
   }, []);
 
-  const value = {
-    currentUser,
-    signup,
-    login,
-    loginWithGoogle,
-    logout
+  const providerContextValue = {
+    activeUser,
+    registerWithEmail,
+    authenticateWithEmail,
+    authenticateWithGoogle,
+    terminateSession,
   };
 
   return (
-    <AuthContext.Provider value={value}>
-      {!loading && children}
-    </AuthContext.Provider>
+    <SessionContext.Provider value={providerContextValue}>
+      {!isSessionLoading && children}
+    </SessionContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useSession = () => {
+  const contextInstance = useContext(SessionContext);
+  if (!contextInstance) {
+    throw new Error("useSession must be wrapped within a SessionProvider");
+  }
+  return contextInstance;
+};

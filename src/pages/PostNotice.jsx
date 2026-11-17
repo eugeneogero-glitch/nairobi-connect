@@ -1,35 +1,35 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { db } from "../firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { useAuth } from "../context/AuthContext";
+import { useSession } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 
-export default function PostNotice() {
-  const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("Community Event");
-  const [location, setLocation] = useState("");
-  const [description, setDescription] = useState("");
-  const [error, setError] = useState("");
-  const { currentUser } = useAuth();
-  const navigate = useNavigate();
+const PostNotice = () => {
+  const [noticeTitle, setNoticeTitle] = useState("");
+  const [noticeCategory, setNoticeCategory] = useState("Community Event");
+  const [noticeLocation, setNoticeLocation] = useState("");
+  const [noticeDetails, setNoticeDetails] = useState("");
+  const [submissionError, setSubmissionError] = useState("");
+  const { activeUser } = useSession();
+  const redirect = useNavigate();
 
-  async function handleSubmit(e) {
-    e.preventDefault();
+  const onPublishNotice = async (event) => {
+    event.preventDefault();
     try {
-      setError("");
+      setSubmissionError("");
       await addDoc(collection(db, "notices"), {
-        title,
-        category,
-        location,
-        description,
-        authorEmail: currentUser ? currentUser.email : "Anonymous",
+        title: noticeTitle,
+        category: noticeCategory,
+        location: noticeLocation,
+        description: noticeDetails,
+        authorEmail: activeUser ? activeUser.email : "Anonymous",
         createdAt: serverTimestamp(),
       });
-      navigate("/");
+      redirect("/");
     } catch (err) {
-      setError("Failed to create notice: " + err.message);
+      setSubmissionError(`Could not publish notice: ${err.message}`);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col justify-center items-center px-4">
@@ -46,13 +46,13 @@ export default function PostNotice() {
           </Link>
         </div>
 
-        {error && (
+        {submissionError && (
           <div className="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm">
-            {error}
+            {submissionError}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={onPublishNotice} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Notice Title
@@ -60,8 +60,8 @@ export default function PostNotice() {
             <input
               type="text"
               required
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              value={noticeTitle}
+              onChange={(event) => setNoticeTitle(event.target.value)}
               className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="e.g. Westlands Community Clean-Up"
             />
@@ -72,8 +72,8 @@ export default function PostNotice() {
               Category
             </label>
             <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              value={noticeCategory}
+              onChange={(event) => setNoticeCategory(event.target.value)}
               className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             >
               <option value="Community Event">Community Event</option>
@@ -90,8 +90,8 @@ export default function PostNotice() {
             <input
               type="text"
               required
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
+              value={noticeLocation}
+              onChange={(event) => setNoticeLocation(event.target.value)}
               className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="e.g. Westlands, Nairobi"
             />
@@ -104,8 +104,8 @@ export default function PostNotice() {
             <textarea
               required
               rows="4"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              value={noticeDetails}
+              onChange={(event) => setNoticeDetails(event.target.value)}
               className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Provide details about the notice..."
             />
@@ -121,4 +121,6 @@ export default function PostNotice() {
       </div>
     </div>
   );
-}
+};
+
+export default PostNotice;

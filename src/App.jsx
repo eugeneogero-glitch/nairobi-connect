@@ -1,13 +1,12 @@
-import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
+import { SessionProvider } from "./context/AuthContext";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import PostNotice from "./pages/PostNotice";
 
-export default function App() {
+const App = () => {
   return (
-    <AuthProvider>
+    <SessionProvider>
       <Router>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -15,6 +14,8 @@ export default function App() {
           <Route path="/post" element={<PostNotice />} />
         </Routes>
       </Router>
-    </AuthProvider>
+    </SessionProvider>
   );
-}
+};
+
+export default App;

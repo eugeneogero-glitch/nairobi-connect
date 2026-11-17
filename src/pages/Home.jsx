@@ -1,55 +1,58 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { db } from "../firebase";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
-import { useAuth } from "../context/AuthContext";
+import { useSession } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 
-export default function Home() {
-  const [notices, setNotices] = useState([]);
-  const [search, setSearch] = useState("");
-  const { currentUser, logout } = useAuth();
-  const navigate = useNavigate();
+const Home = () => {
+  const [communityNotices, setCommunityNotices] = useState([]);
+  const [searchFilter, setSearchFilter] = useState("");
+  const { activeUser, terminateSession } = useSession();
+  const redirect = useNavigate();
 
   useEffect(() => {
-    async function fetchNotices() {
+    const loadCommunityFeed = async () => {
       try {
-        const q = query(
+        const noticesQuery = query(
           collection(db, "notices"),
           orderBy("createdAt", "desc"),
         );
-        const querySnapshot = await getDocs(q);
-        const list = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
+        const snapshot = await getDocs(noticesQuery);
+        const fetchedItems = snapshot.docs.map((item) => ({
+          id: item.id,
+          ...item.data(),
         }));
-        setNotices(list);
-      } catch (err) {
-        console.error("Error fetching notices: ", err);
+        setCommunityNotices(fetchedItems);
+      } catch (fetchError) {
+        console.error("Failed to load notices:", fetchError);
       }
-    }
-    fetchNotices();
+    };
+
+    loadCommunityFeed();
   }, []);
 
-  async function handleLogout() {
+  const onSignOutClick = async () => {
     try {
-      await logout();
-      navigate("/login");
-    } catch (err) {
-      console.error("Failed to log out", err);
+      await terminateSession();
+      redirect("/login");
+    } catch (signOutError) {
+      console.error("Error ending session:", signOutError);
     }
-  }
+  };
 
-  const filteredNotices = notices.filter(
-    (n) =>
-      n.title?.toLowerCase().includes(search.toLowerCase()) ||
-      n.category?.toLowerCase().includes(search.toLowerCase()) ||
-      n.location?.toLowerCase().includes(search.toLowerCase()),
-  );
+  const matchingNotices = communityNotices.filter((item) => {
+    const queryTerm = searchFilter.toLowerCase();
+    return (
+      item.title?.toLowerCase().includes(queryTerm) ||
+      item.category?.toLowerCase().includes(queryTerm) ||
+      item.location?.toLowerCase().includes(queryTerm)
+    );
+  });
 
   return (
     <div className="min-h-screen bg-gray-100">
       <nav className="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold text-blue-600">Nairobi Connect 🇰🇪</h1>
+        <h1 className="text-xl font-bold text-blue-600">Nairobi Connect</h1>
         <div className="flex items-center gap-4">
           <Link
             to="/post"
@@ -57,9 +60,9 @@ export default function Home() {
           >
             + Post Notice
           </Link>
-          {currentUser ? (
+          {activeUser ? (
             <button
-              onClick={handleLogout}
+              onClick={onSignOutClick}
               className="text-gray-600 hover:text-red-600 font-medium"
             >
               Log Out
@@ -76,40 +79,38 @@ export default function Home() {
         <div className="mb-6">
           <input
             type="text"
-            placeholder="🔍 Search notices by title, category, or location..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search notices by title, category, or location..."
+            value={searchFilter}
+            onChange={(event) => setSearchFilter(event.target.value)}
             className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
         <div className="grid gap-4">
-          {filteredNotices.length === 0 ? (
+          {matchingNotices.length === 0 ? (
             <p className="text-center text-gray-500 py-10">
               No notices found. Be the first to post one!
             </p>
           ) : (
-            filteredNotices.map((notice) => (
+            matchingNotices.map((item) => (
               <div
-                key={notice.id}
+                key={item.id}
                 className="bg-white p-6 rounded-xl shadow-sm border border-gray-200"
               >
                 <div className="flex justify-between items-start mb-2">
                   <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-                    {notice.category || "General"}
+                    {item.category || "General"}
                   </span>
                   <span className="text-xs text-gray-400">
-                    {notice.location || "Nairobi"}
+                    {item.location || "Nairobi"}
                   </span>
                 </div>
                 <h3 className="text-lg font-bold text-gray-800 mb-1">
-                  {notice.title}
+                  {item.title}
                 </h3>
-                <p className="text-gray-600 text-sm mb-4">
-                  {notice.description}
-                </p>
+                <p className="text-gray-600 text-sm mb-4">{item.description}</p>
                 <div className="text-xs text-gray-400">
-                  Posted by: {notice.authorEmail || "Anonymous"}
+                  Posted by: {item.authorEmail || "Anonymous"}
                 </div>
               </div>
             ))
@@ -118,4 +119,6 @@ export default function Home() {
       </div>
     </div>
   );
-}
+};
+
+export default Home;
