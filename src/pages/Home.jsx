@@ -16,6 +16,7 @@ const Home = () => {
   const [communityNotices, setCommunityNotices] = useState([]);
   const [searchFilter, setSearchFilter] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
@@ -37,6 +38,8 @@ const Home = () => {
         setCommunityNotices(fetchedItems);
       } catch (fetchError) {
         console.error("Failed to load notices:", fetchError);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -139,7 +142,6 @@ const Home = () => {
       </nav>
 
       <div className="max-w-4xl mx-auto p-6">
-        {/* Category Filter Pills */}
         <div className="flex flex-wrap gap-2 mb-4">
           {categories.map((cat) => (
             <button
@@ -156,7 +158,6 @@ const Home = () => {
           ))}
         </div>
 
-        {/* Search Bar */}
         <div className="mb-6">
           <input
             type="text"
@@ -168,7 +169,14 @@ const Home = () => {
         </div>
 
         <div className="grid gap-4">
-          {matchingNotices.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-16">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent mb-2"></div>
+              <p className="text-gray-500 text-sm">
+                Loading community notices...
+              </p>
+            </div>
+          ) : matchingNotices.length === 0 ? (
             <p className="text-center text-gray-500 py-10">
               No notices found matching your criteria.
             </p>
