@@ -1,12 +1,23 @@
 import { useEffect, useState } from "react";
 import { db } from "../firebase";
-import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  query,
+  orderBy,
+  doc,
+  deleteDoc,
+  updateDoc,
+} from "firebase/firestore";
 import { useSession } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 
 const Home = () => {
   const [communityNotices, setCommunityNotices] = useState([]);
   const [searchFilter, setSearchFilter] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
   const { activeUser, terminateSession } = useSession();
   const redirect = useNavigate();
 
@@ -37,6 +48,45 @@ const Home = () => {
       redirect("/login");
     } catch (signOutError) {
       console.error("Error ending session:", signOutError);
+    }
+  };
+
+  const onDeleteNotice = async (noticeId) => {
+    if (!window.confirm("Delete this notice?")) return;
+    try {
+      await deleteDoc(doc(db, "notices", noticeId));
+      setCommunityNotices((prev) =>
+        prev.filter((item) => item.id !== noticeId),
+      );
+    } catch (err) {
+      console.error("Failed to delete notice:", err);
+      alert("Could not delete notice.");
+    }
+  };
+
+  const startEditing = (item) => {
+    setEditingId(item.id);
+    setEditTitle(item.title);
+    setEditDescription(item.description);
+  };
+
+  const onSaveEdit = async (noticeId) => {
+    try {
+      await updateDoc(doc(db, "notices", noticeId), {
+        title: editTitle,
+        description: editDescription,
+      });
+      setCommunityNotices((prev) =>
+        prev.map((item) =>
+          item.id === noticeId
+            ? { ...item, title: editTitle, description: editDescription }
+            : item,
+        ),
+      );
+      setEditingId(null);
+    } catch (err) {
+      console.error("Failed to update notice:", err);
+      alert("Could not update notice.");
     }
   };
 
@@ -105,12 +155,68 @@ const Home = () => {
                     {item.location || "Nairobi"}
                   </span>
                 </div>
-                <h3 className="text-lg font-bold text-gray-800 mb-1">
-                  {item.title}
-                </h3>
-                <p className="text-gray-600 text-sm mb-4">{item.description}</p>
-                <div className="text-xs text-gray-400">
-                  Posted by: {item.authorEmail || "Anonymous"}
+
+                {editingId === item.id ? (
+                  <div className="space-y-3 my-2">
+                    <input
+                      type="text"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-bold"
+                    />
+                    <textarea
+                      rows="3"
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => onSaveEdit(item.id)}
+                        className="bg-green-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-green-700"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => setEditingId(null)}
+                        className="bg-gray-200 text-gray-700 text-xs px-3 py-1.5 rounded-lg hover:bg-gray-300"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <h3 className="text-lg font-bold text-gray-800 mb-1">
+                      {item.title}
+                    </h3>
+                    <p className="text-gray-600 text-sm mb-4">
+                      {item.description}
+                    </p>
+                  </>
+                )}
+
+                <div className="flex justify-between items-center text-xs text-gray-400">
+                  <span>Posted by: {item.authorEmail || "Anonymous"}</span>
+
+                  {activeUser &&
+                    activeUser.email === item.authorEmail &&
+                    editingId !== item.id && (
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => startEditing(item)}
+                          className="text-blue-600 hover:underline font-medium"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => onDeleteNotice(item.id)}
+                          className="text-red-600 hover:underline font-medium"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
                 </div>
               </div>
             ))

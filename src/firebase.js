@@ -3,15 +3,18 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID
+  apiKey: "AIzaSyC0nBLLBbNUi6dTQSsYWvbHGSj1mWr1ae4",
+  authDomain: "nairobi-connect-cb1e1.firebaseapp.com",
+  projectId: "nairobi-connect-cb1e1",
+  storageBucket: "nairobi-connect-cb1e1.firebasestorage.app",
+  messagingSenderId: "398966971876",
+  appId: "1:398966971876:web:f000399c6202e9d6027bf1",
+  measurementId: "G-J99D6Q6QDC",
 };
 
 const app = initializeApp(firebaseConfig);
+
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 export const db = getFirestore(app);
+export default app;
