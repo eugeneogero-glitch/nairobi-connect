@@ -15,6 +15,7 @@ import { useNavigate, Link } from "react-router-dom";
 const Home = () => {
   const [communityNotices, setCommunityNotices] = useState([]);
   const [searchFilter, setSearchFilter] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const [editingId, setEditingId] = useState(null);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
@@ -90,13 +91,25 @@ const Home = () => {
     }
   };
 
+  const categories = [
+    "All",
+    "Community Event",
+    "Safety Alert",
+    "Lost & Found",
+    "General",
+  ];
+
   const matchingNotices = communityNotices.filter((item) => {
     const queryTerm = searchFilter.toLowerCase();
-    return (
+    const matchesSearch =
       item.title?.toLowerCase().includes(queryTerm) ||
       item.category?.toLowerCase().includes(queryTerm) ||
-      item.location?.toLowerCase().includes(queryTerm)
-    );
+      item.location?.toLowerCase().includes(queryTerm);
+
+    const matchesCategory =
+      selectedCategory === "All" || item.category === selectedCategory;
+
+    return matchesSearch && matchesCategory;
   });
 
   return (
@@ -126,6 +139,24 @@ const Home = () => {
       </nav>
 
       <div className="max-w-4xl mx-auto p-6">
+        {/* Category Filter Pills */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition ${
+                selectedCategory === cat
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        {/* Search Bar */}
         <div className="mb-6">
           <input
             type="text"
@@ -139,7 +170,7 @@ const Home = () => {
         <div className="grid gap-4">
           {matchingNotices.length === 0 ? (
             <p className="text-center text-gray-500 py-10">
-              No notices found. Be the first to post one!
+              No notices found matching your criteria.
             </p>
           ) : (
             matchingNotices.map((item) => (
