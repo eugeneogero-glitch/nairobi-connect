@@ -16,6 +16,7 @@ const Home = () => {
   const [communityNotices, setCommunityNotices] = useState([]);
   const [searchFilter, setSearchFilter] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [showOnlyMyNotices, setShowOnlyMyNotices] = useState(false);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
   const [editTitle, setEditTitle] = useState("");
@@ -112,7 +113,11 @@ const Home = () => {
     const matchesCategory =
       selectedCategory === "All" || item.category === selectedCategory;
 
-    return matchesSearch && matchesCategory;
+    const matchesAuthor =
+      !showOnlyMyNotices ||
+      (activeUser && item.authorEmail === activeUser.email);
+
+    return matchesSearch && matchesCategory && matchesAuthor;
   });
 
   return (
@@ -142,20 +147,35 @@ const Home = () => {
       </nav>
 
       <div className="max-w-4xl mx-auto p-6">
-        <div className="flex flex-wrap gap-2 mb-4">
-          {categories.map((cat) => (
+        <div className="flex flex-wrap justify-between items-center mb-4 gap-2">
+          <div className="flex flex-wrap gap-2">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition ${
+                  selectedCategory === cat
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          {activeUser && (
             <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition ${
-                selectedCategory === cat
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+              onClick={() => setShowOnlyMyNotices(!showOnlyMyNotices)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
+                showOnlyMyNotices
+                  ? "bg-gray-800 text-white border-gray-800"
+                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
               }`}
             >
-              {cat}
+              {showOnlyMyNotices ? "Show All Notices" : "My Notices"}
             </button>
-          ))}
+          )}
         </div>
 
         <div className="mb-6">
