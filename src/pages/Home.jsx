@@ -114,8 +114,7 @@ const Home = () => {
       selectedCategory === "All" || item.category === selectedCategory;
 
     const matchesAuthor =
-      !showOnlyMyNotices ||
-      (activeUser && item.authorEmail === activeUser.email);
+      !showOnlyMyNotices || (activeUser && item.authorId === activeUser.uid);
 
     return matchesSearch && matchesCategory && matchesAuthor;
   });
@@ -256,10 +255,10 @@ const Home = () => {
                 )}
 
                 <div className="flex justify-between items-center text-xs text-gray-400">
-                  <span>Posted by: {item.authorEmail || "Anonymous"}</span>
+                  <span>Posted by: {item.authorName || "Anonymous"}</span>
 
                   {activeUser &&
-                    activeUser.email === item.authorEmail &&
+                    activeUser.uid === item.authorId &&
                     editingId !== item.id && (
                       <div className="flex gap-3">
                         <button

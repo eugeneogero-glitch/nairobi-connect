@@ -15,6 +15,10 @@ const PostNotice = () => {
 
   const onPublishNotice = async (event) => {
     event.preventDefault();
+    if (!activeUser) {
+      setSubmissionError("Please log in to publish a notice.");
+      return;
+    }
     try {
       setSubmissionError("");
       await addDoc(collection(db, "notices"), {
@@ -22,7 +26,8 @@ const PostNotice = () => {
         category: noticeCategory,
         location: noticeLocation,
         description: noticeDetails,
-        authorEmail: activeUser ? activeUser.email : "Anonymous",
+        authorId: activeUser.uid,
+        authorName: activeUser.displayName || activeUser.email.split("@")[0],
         createdAt: serverTimestamp(),
       });
       redirect("/");
@@ -77,9 +82,9 @@ const PostNotice = () => {
               className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             >
               <option value="Community Event">Community Event</option>
-              <option value="Lost & Found">Lost & Found</option>
-              <option value="Local Services">Local Services</option>
-              <option value="Alerts">Alerts</option>
+              <option value="Safety Alert">Safety Alert</option>
+              <option value="Lost & Found">Lost &amp; Found</option>
+              <option value="General">General</option>
             </select>
           </div>
 
