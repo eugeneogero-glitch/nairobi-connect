@@ -106,9 +106,11 @@ const Home = () => {
   ];
 
   const matchingNotices = communityNotices.filter((item) => {
-    const queryTerm = searchFilter.toLowerCase();
+    const queryTerm = searchFilter.trim().toLowerCase();
     const matchesSearch =
+      !queryTerm ||
       item.title?.toLowerCase().includes(queryTerm) ||
+      item.description?.toLowerCase().includes(queryTerm) ||
       item.category?.toLowerCase().includes(queryTerm) ||
       item.location?.toLowerCase().includes(queryTerm);
 
@@ -120,6 +122,17 @@ const Home = () => {
 
     return matchesSearch && matchesCategory && matchesAuthor;
   });
+
+  const hasActiveFilters =
+    searchFilter.trim() !== "" ||
+    selectedCategory !== "All" ||
+    showOnlyMyNotices;
+
+  const resetFilters = () => {
+    setSearchFilter("");
+    setSelectedCategory("All");
+    setShowOnlyMyNotices(false);
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -179,16 +192,44 @@ const Home = () => {
           )}
         </div>
 
-        <div className="mb-6">
-          <input
-            type="text"
-            placeholder="Search notices by title, category, or location..."
-            value={searchFilter}
-            onChange={(event) => setSearchFilter(event.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+        <div className="mb-6 space-y-2">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search notices by title, description, category, or location..."
+              value={searchFilter}
+              onChange={(event) => setSearchFilter(event.target.value)}
+              className="w-full px-4 py-3 pr-20 border border-gray-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {searchFilter && (
+              <button
+                type="button"
+                onClick={() => setSearchFilter("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-500 hover:text-gray-800 px-2 py-1 rounded"
+              >
+                Clear
+              </button>
+            )}
+          </div>
 
+          {!loading && (
+            <div className="flex items-center justify-between text-xs text-gray-500 px-1">
+              <span>
+                Showing {matchingNotices.length} of {communityNotices.length}{" "}
+                {communityNotices.length === 1 ? "notice" : "notices"}
+              </span>
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className="text-blue-600 hover:underline font-medium"
+                >
+                  Reset all filters
+                </button>
+              )}
+            </div>
+          )}
+        </div>
         <div className="grid gap-4">
           {loading ? (
             <div className="text-center py-16">
