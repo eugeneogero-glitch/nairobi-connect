@@ -1,3 +1,4 @@
+import ProtectedRoute from "./components/ProtectedRoute";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { SessionProvider } from "./context/AuthContext";
 import Home from "./pages/Home";
@@ -11,7 +12,14 @@ const App = () => {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/post" element={<PostNotice />} />
+          <Route
+            path="/post"
+            element={
+              <ProtectedRoute>
+                <PostNotice />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </Router>
     </SessionProvider>
