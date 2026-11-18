@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { db } from "../firebase";
 import {
   collection,
-  getDocs,
+  onSnapshot,
   query,
   orderBy,
   doc,
@@ -25,26 +25,28 @@ const Home = () => {
   const redirect = useNavigate();
 
   useEffect(() => {
-    const loadCommunityFeed = async () => {
-      try {
-        const noticesQuery = query(
-          collection(db, "notices"),
-          orderBy("createdAt", "desc"),
-        );
-        const snapshot = await getDocs(noticesQuery);
+    const noticesQuery = query(
+      collection(db, "notices"),
+      orderBy("createdAt", "desc"),
+    );
+
+    const unsubscribe = onSnapshot(
+      noticesQuery,
+      (snapshot) => {
         const fetchedItems = snapshot.docs.map((item) => ({
           id: item.id,
           ...item.data(),
         }));
         setCommunityNotices(fetchedItems);
-      } catch (fetchError) {
-        console.error("Failed to load notices:", fetchError);
-      } finally {
         setLoading(false);
-      }
-    };
+      },
+      (fetchError) => {
+        console.error("Failed to load notices:", fetchError);
+        setLoading(false);
+      },
+    );
 
-    loadCommunityFeed();
+    return () => unsubscribe();
   }, []);
 
   const onSignOutClick = async () => {
