@@ -8,5 +8,10 @@ export default defineConfig({
     globals: true,
     environment: "happy-dom",
     setupFiles: "./src/setupTests.js",
+    coverage: {
+      provider: "v8",
+      include: ["src/**/*.{js,jsx}"],
+      exclude: ["src/main.jsx", "src/setupTests.js", "src/tests/**"],
+    },
   },
 });
