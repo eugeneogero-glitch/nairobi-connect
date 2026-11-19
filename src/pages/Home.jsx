@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import {
   collection,
   getDocs,
@@ -8,7 +9,8 @@ import {
   updateDoc,
   deleteDoc,
 } from "firebase/firestore";
-import { db } from "../firebase";
+import { signOut } from "firebase/auth";
+import { db, auth } from "../firebase";
 import { useSession } from "../context/AuthContext";
 import CommentSection from "../components/CommentSection";
 
@@ -36,6 +38,14 @@ export default function Home() {
     };
     fetchNotices();
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Error signing out: ", error);
+    }
+  };
 
   const startEdit = (notice) => {
     setEditingId(notice.id);
@@ -83,9 +93,28 @@ export default function Home() {
 
   return (
     <div className="max-w-4xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">
-        Nairobi Connects - Notice Board
-      </h1>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Nairobi Connects - Notice Board</h1>
+        <div className="flex gap-4 text-sm">
+          {activeUser ? (
+            <>
+              <Link to="/post" className="text-blue-600 hover:underline">
+                Post a notice
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="text-red-600 hover:underline"
+              >
+                Log out
+              </button>
+            </>
+          ) : (
+            <Link to="/login" className="text-blue-600 hover:underline">
+              Log in
+            </Link>
+          )}
+        </div>
+      </div>
 
       <div className="flex gap-4 mb-6">
         <input
@@ -151,20 +180,34 @@ export default function Home() {
                 </div>
 
                 {isOwner && (
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex gap-3 mt-2 text-sm">
                     {isEditing ? (
                       <>
-                        <button onClick={() => saveEdit(notice.id)}>
+                        <button
+                          onClick={() => saveEdit(notice.id)}
+                          className="text-green-700 hover:underline"
+                        >
                           Save
                         </button>
-                        <button onClick={() => setEditingId(null)}>
+                        <button
+                          onClick={() => setEditingId(null)}
+                          className="text-gray-600 hover:underline"
+                        >
                           Cancel
                         </button>
                       </>
                     ) : (
                       <>
-                        <button onClick={() => startEdit(notice)}>Edit</button>
-                        <button onClick={() => handleDelete(notice.id)}>
+                        <button
+                          onClick={() => startEdit(notice)}
+                          className="text-blue-600 hover:underline"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(notice.id)}
+                          className="text-red-600 hover:underline"
+                        >
                           Delete
                         </button>
                       </>

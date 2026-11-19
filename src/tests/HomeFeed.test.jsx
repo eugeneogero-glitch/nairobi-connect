@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { updateDoc, deleteDoc } from "firebase/firestore";
+import { signOut } from "firebase/auth";
 import Home from "../pages/Home";
 
 vi.mock("../components/CommentSection", () => ({
@@ -9,6 +10,10 @@ vi.mock("../components/CommentSection", () => ({
 }));
 
 vi.mock("../firebase", () => ({ db: {}, auth: {} }));
+
+vi.mock("firebase/auth", () => ({
+  signOut: vi.fn(() => Promise.resolve()),
+}));
 
 vi.mock("../context/AuthContext", () => ({
   useSession: () => ({ activeUser: { uid: "owner-123" } }),
@@ -188,5 +193,15 @@ describe("Home feed", () => {
       await screen.findByText("Westlands Big Clean-up"),
     ).toBeInTheDocument();
     expect(updateDoc).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows the Post a notice link and logs out", async () => {
+    renderHome();
+    await screen.findByText("Westlands Clean-up");
+
+    expect(screen.getByText("Post a notice")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Log out"));
+    await waitFor(() => expect(signOut).toHaveBeenCalledTimes(1));
   });
 });
