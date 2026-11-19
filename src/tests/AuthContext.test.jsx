@@ -1,6 +1,5 @@
-import { render, screen, act, waitFor } from "@testing-library/react";
+import { render, screen, act } from "@testing-library/react";
 import { SessionProvider, useSession } from "../context/AuthContext";
-import { useContext } from "react";
 vi.mock("firebase/auth", () => ({
   getAuth: vi.fn(),
   signInWithEmailAndPassword: vi.fn(),
@@ -17,13 +16,7 @@ const ContextConsumer = () => {
   const context = useSession();
   if (!context) return <div>No Context</div>;
 
-  const {
-    activeUser,
-    registerWithEmail,
-    authenticateWithEmail,
-    authenticateWithGoogle,
-    terminateSession,
-  } = context;
+  const { activeUser, authenticateWithEmail, terminateSession } = context;
 
   return (
     <div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   collection,
   addDoc,
@@ -37,7 +37,6 @@ export default function CommentSection({ noticeId, currentUser }) {
     try {
       await addDoc(collection(db, "notices", noticeId, "comments"), {
         text: newComment,
-        authorId: currentUser?.uid,
         authorName: currentUser?.displayName || "Anonymous",
         createdAt: serverTimestamp(),
       });
