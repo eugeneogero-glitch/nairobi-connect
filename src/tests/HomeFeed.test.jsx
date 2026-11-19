@@ -1,126 +1,192 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, it, expect, vi } from "vitest";
+import { updateDoc, deleteDoc } from "firebase/firestore";
 import Home from "../pages/Home";
 
-const { notices, mockSession } = vi.hoisted(() => ({
-  notices: [
-    {
-      id: "1",
-      title: "Westlands Clean-up",
-      description: "Meet at 9am",
-      category: "Community Event",
-      location: "Westlands, Nairobi",
-      authorId: "u1",
-      authorName: "Eugene",
-    },
-    {
-      id: "2",
-      title: "Lost Wallet",
-      description: "Black wallet",
-      category: "Lost & Found",
-      location: "Kilimani, Nairobi",
-      authorId: "u2",
-      authorName: "Amina",
-    },
-  ],
-  mockSession: { value: { activeUser: null, terminateSession: () => {} } },
+vi.mock("../components/CommentSection", () => ({
+  default: () => <div data-testid="comments" />,
 }));
 
-vi.mock("../firebase", () => ({ db: {} }));
+vi.mock("../firebase", () => ({ db: {}, auth: {} }));
+
 vi.mock("../context/AuthContext", () => ({
-  useSession: () => mockSession.value,
+  useSession: () => ({ activeUser: { uid: "owner-123" } }),
 }));
+
+const fakeNotices = [
+  {
+    id: "1",
+    title: "Westlands Clean-up",
+    description: "Meet at 9am at the roundabout",
+    category: "Community Event",
+    authorName: "Eugene",
+    authorId: "owner-123",
+  },
+  {
+    id: "2",
+    title: "Lost Wallet",
+    description: "Black wallet near Kilimani market",
+    category: "Lost & Found",
+    authorName: "Amina",
+    authorId: "someone-else",
+  },
+];
+
 vi.mock("firebase/firestore", () => ({
   collection: vi.fn(),
   query: vi.fn(),
   orderBy: vi.fn(),
   doc: vi.fn(),
-  deleteDoc: vi.fn(),
-  updateDoc: vi.fn(),
-  onSnapshot: (q, onNext) => {
-    onNext({
-      docs: notices.map(({ id, ...rest }) => ({ id, data: () => rest })),
-    });
-    return () => {};
-  },
+  updateDoc: vi.fn(() => Promise.resolve()),
+  deleteDoc: vi.fn(() => Promise.resolve()),
+  getDocs: vi.fn(() =>
+    Promise.resolve({
+      docs: fakeNotices.map((n) => {
+        const { id, ...data } = n;
+        return { id, data: () => data };
+      }),
+    }),
+  ),
 }));
 
-const renderHome = () =>
-  render(
+function renderHome() {
+  return render(
     <MemoryRouter>
       <Home />
     </MemoryRouter>,
   );
+}
 
 describe("Home feed", () => {
-  it("shows notices from Firestore", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("shows notices from Firestore", async () => {
     renderHome();
-    expect(screen.getByText("Westlands Clean-up")).toBeInTheDocument();
+    expect(await screen.findByText("Westlands Clean-up")).toBeInTheDocument();
     expect(screen.getByText("Lost Wallet")).toBeInTheDocument();
   });
 
-  it("filters notices by category", () => {
+  it("filters notices by category", async () => {
     renderHome();
-    fireEvent.click(screen.getByRole("button", { name: "Lost & Found" }));
+    await screen.findByText("Westlands Clean-up");
+
+    fireEvent.change(screen.getByRole("combobox"), {
+      target: { value: "Lost & Found" },
+    });
+
     expect(screen.getByText("Lost Wallet")).toBeInTheDocument();
     expect(screen.queryByText("Westlands Clean-up")).not.toBeInTheDocument();
   });
 
-  it("searches notices by keyword", () => {
+  it("filters by Community Event", async () => {
     renderHome();
+    await screen.findByText("Westlands Clean-up");
+
+    fireEvent.change(screen.getByRole("combobox"), {
+      target: { value: "Community Event" },
+    });
+
+    expect(screen.getByText("Westlands Clean-up")).toBeInTheDocument();
+    expect(screen.queryByText("Lost Wallet")).not.toBeInTheDocument();
+  });
+
+  it("searches notices by keyword", async () => {
+    renderHome();
+    await screen.findByText("Westlands Clean-up");
+
     fireEvent.change(screen.getByPlaceholderText(/search notices/i), {
       target: { value: "kilimani" },
     });
+
     expect(screen.getByText("Lost Wallet")).toBeInTheDocument();
     expect(screen.queryByText("Westlands Clean-up")).not.toBeInTheDocument();
   });
 
-  it("shows an empty message when nothing matches", () => {
+  it("shows an empty message when nothing matches", async () => {
     renderHome();
+    await screen.findByText("Westlands Clean-up");
+
     fireEvent.change(screen.getByPlaceholderText(/search notices/i), {
       target: { value: "zzzz" },
     });
-    expect(
-      screen.getByText(/no notices found matching your criteria/i),
-    ).toBeInTheDocument();
+
+    expect(screen.getByText("No notices found.")).toBeInTheDocument();
   });
 
-  it("shows Edit and Delete only on the owner's notice", () => {
-    mockSession.value = {
-      activeUser: { uid: "u1", email: "e@x.com" },
-      terminateSession: () => {},
-    };
+  it("shows Edit and Delete only on the owner's notice", async () => {
     renderHome();
+    await screen.findByText("Westlands Clean-up");
+
     expect(screen.getAllByText("Edit")).toHaveLength(1);
     expect(screen.getAllByText("Delete")).toHaveLength(1);
   });
-  it("searches notices by description and clears search input", () => {
+
+  it("searches notices by description", async () => {
     renderHome();
-    const searchInput = screen.getByPlaceholderText(/search notices/i);
+    await screen.findByText("Westlands Clean-up");
 
-    fireEvent.change(searchInput, { target: { value: "9am" } });
-    expect(screen.getByText("Westlands Clean-up")).toBeInTheDocument();
-    expect(screen.queryByText("Lost Wallet")).not.toBeInTheDocument();
-    expect(screen.getByText("Showing 1 of 2 notices")).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: /^clear$/i }));
-    expect(screen.getByText("Lost Wallet")).toBeInTheDocument();
-    expect(screen.getByText("Showing 2 of 2 notices")).toBeInTheDocument();
-  });
-
-  it("resets all active filters when clicking Reset all filters", () => {
-    renderHome();
-    fireEvent.click(screen.getByRole("button", { name: "Lost & Found" }));
     fireEvent.change(screen.getByPlaceholderText(/search notices/i), {
-      target: { value: "black" },
+      target: { value: "9am" },
     });
 
-    expect(screen.getByText("Showing 1 of 2 notices")).toBeInTheDocument();
+    expect(screen.getByText("Westlands Clean-up")).toBeInTheDocument();
+    expect(screen.queryByText("Lost Wallet")).not.toBeInTheDocument();
+  });
 
-    fireEvent.click(screen.getByRole("button", { name: /reset all filters/i }));
+  it("resets all active filters when changing values back to default", async () => {
+    renderHome();
+    await screen.findByText("Westlands Clean-up");
+
+    fireEvent.change(screen.getByRole("combobox"), {
+      target: { value: "Lost & Found" },
+    });
+    expect(screen.queryByText("Westlands Clean-up")).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole("combobox"), {
+      target: { value: "All" },
+    });
+
     expect(screen.getByText("Westlands Clean-up")).toBeInTheDocument();
     expect(screen.getByText("Lost Wallet")).toBeInTheDocument();
-    expect(screen.getByText("Showing 2 of 2 notices")).toBeInTheDocument();
+  });
+
+  it("deletes the owner's notice after confirmation", async () => {
+    vi.stubGlobal(
+      "confirm",
+      vi.fn(() => true),
+    );
+    renderHome();
+    await screen.findByText("Westlands Clean-up");
+
+    fireEvent.click(screen.getByText("Delete"));
+
+    await waitFor(() => {
+      expect(deleteDoc).toHaveBeenCalledTimes(1);
+      expect(screen.queryByText("Westlands Clean-up")).not.toBeInTheDocument();
+    });
+    expect(screen.getByText("Lost Wallet")).toBeInTheDocument();
+  });
+
+  it("edits the owner's notice", async () => {
+    renderHome();
+    await screen.findByText("Westlands Clean-up");
+
+    fireEvent.click(screen.getByText("Edit"));
+    fireEvent.change(screen.getByLabelText("Edit title"), {
+      target: { value: "Westlands Big Clean-up" },
+    });
+    fireEvent.click(screen.getByText("Save"));
+
+    expect(
+      await screen.findByText("Westlands Big Clean-up"),
+    ).toBeInTheDocument();
+    expect(updateDoc).toHaveBeenCalledTimes(1);
   });
 });
