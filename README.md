@@ -1,16 +1,23 @@
-# React + Vite
+# Nairobi Connect
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A local community notice board and discussion web application for sharing neighborhood updates, safety alerts, events, and comments.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Authentication & Protected Routes:** Sign in with Firebase Authentication and protect private actions/routes (`AuthContext.jsx`, `ProtectedRoute.jsx`).
+- **Community Notice Feed:** Browse notices with author details, timestamps, and category badges (`General`, `Community Event`, `Safety Alert`, `Lost & Found`).
+- **Create, Edit & Delete Notices:** Authenticated users can publish notices and manage (**Edit** / **Delete**) notices they own.
+- **Live Search & Category Filtering:** Filter notices in real time by keyword and category on the home feed.
+- **Notice Discussions:** View and post comments stored under each notice's `comments` subcollection in Cloud Firestore.
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Frontend:** React, Vite, Tailwind CSS
+- **Backend / Services:** Firebase Authentication, Cloud Firestore
+- **Testing & Quality:** Vitest, Testing Library, ESLint, GitHub Actions CI
 
-## Expanding the ESLint configuration
+## Getting Started Locally
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+1. **Install dependencies:**
+   ```bash
+   npm install
