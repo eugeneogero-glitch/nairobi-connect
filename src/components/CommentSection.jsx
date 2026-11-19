@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { 
-  collection, 
-  addDoc, 
-  query, 
-  orderBy, 
-  onSnapshot, 
-  serverTimestamp 
+import {
+  collection,
+  addDoc,
+  query,
+  orderBy,
+  onSnapshot,
+  serverTimestamp,
 } from "firebase/firestore";
 import { db } from "../firebase";
 
@@ -16,13 +16,13 @@ export default function CommentSection({ noticeId, currentUser }) {
   useEffect(() => {
     const q = query(
       collection(db, "notices", noticeId, "comments"),
-      orderBy("createdAt", "asc")
+      orderBy("createdAt", "asc"),
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const commentList = snapshot.docs.map(doc => ({
+      const commentList = snapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       }));
       setComments(commentList);
     });
@@ -37,6 +37,7 @@ export default function CommentSection({ noticeId, currentUser }) {
     try {
       await addDoc(collection(db, "notices", noticeId, "comments"), {
         text: newComment,
+        authorId: currentUser?.uid,
         authorName: currentUser?.displayName || "Anonymous",
         createdAt: serverTimestamp(),
       });
@@ -49,7 +50,7 @@ export default function CommentSection({ noticeId, currentUser }) {
   return (
     <div className="mt-4 border-t pt-3">
       <h4 className="font-semibold text-sm mb-2">Discussion</h4>
-      
+
       <div className="space-y-2 mb-3 max-h-40 overflow-y-auto">
         {comments.map((comment) => (
           <div key={comment.id} className="bg-gray-50 p-2 rounded text-sm">
@@ -69,7 +70,7 @@ export default function CommentSection({ noticeId, currentUser }) {
           placeholder="Add a comment..."
           className="flex-1 border rounded px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
-        <button 
+        <button
           type="submit"
           className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition"
         >
