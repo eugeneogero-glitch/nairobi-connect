@@ -8,7 +8,7 @@ import PostNotice from "./pages/PostNotice";
 const App = () => {
   return (
     <SessionProvider>
-      <Router>
+      <Router basename="/nairobi-connect">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
