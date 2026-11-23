@@ -32,17 +32,18 @@ export default function CommentSection({ noticeId, currentUser }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!newComment.trim()) return;
+    if (!newComment.trim() || !currentUser) return;
 
     try {
       await addDoc(collection(db, "notices", noticeId, "comments"), {
         text: newComment,
-        authorName: currentUser?.displayName || "Anonymous",
+        authorId: currentUser.uid,
+        authorName: currentUser.displayName || "Anonymous",
         createdAt: serverTimestamp(),
       });
       setNewComment("");
     } catch (error) {
-      console.error("Error adding comment: ", error);
+      console.error("Error adding comment:", error);
     }
   };
 
